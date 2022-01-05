@@ -29,6 +29,7 @@ object App {
 class App(reporter: Reporter, configuration: Config) {
 
   def run(arguments: Array[String]) {
+    System.out.println("Hello!")
     val commandLineConfiguration = CommandLineConfiguration.buildFromArguments(arguments)
     val registry = Registry.fromDirectory(new File(commandLineConfiguration.migrationsDirectory, commandLineConfiguration.dataStore), reporter)
     val dataStoreName = commandLineConfiguration.dataStore
