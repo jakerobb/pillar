@@ -1,10 +1,15 @@
 package de.kaufhof.pillar
 
-import java.util.Date
-
 import com.datastax.driver.core.Session
 
+import java.io.File
+import java.util.Date
+
+
 trait Reporter {
+  def parsing(file: File)
+  def parsed(file: File)
+  def parseFail(file: File, exception: Exception)
   def migrating(session: Session, dateRestriction: Option[Date])
   def applying(migration: Migration)
   def reversing(migration: Migration)

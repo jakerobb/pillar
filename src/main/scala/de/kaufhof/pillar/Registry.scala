@@ -1,7 +1,7 @@
 package de.kaufhof.pillar
 
 import java.util.Date
-import java.io.{FileInputStream, File}
+import java.io.{File, FileInputStream}
 
 object Registry {
   def apply(migrations: Seq[Migration]): Registry = {
@@ -9,23 +9,25 @@ object Registry {
   }
 
   def fromDirectory(directory: File, reporter: Reporter): Registry = {
-    new Registry(parseMigrationsInDirectory(directory).map(new ReportingMigration(reporter, _)))
+    new Registry(parseMigrationsInDirectory(directory, reporter).map(new ReportingMigration(reporter, _)))
   }
 
-  def fromDirectory(directory: File): Registry = {
-    new Registry(parseMigrationsInDirectory(directory))
-  }
-
-  private def parseMigrationsInDirectory(directory: File): Seq[Migration] = {
+  private def parseMigrationsInDirectory(directory: File, reporter: Reporter): Seq[Migration] = {
     if(!directory.isDirectory) return List.empty
 
     val parser = Parser()
 
     directory.listFiles().map {
       file =>
+        reporter.parsing(file)
         val stream = new FileInputStream(file)
         try {
-          parser.parse(stream)
+          val migration = parser.parse(stream)
+          reporter.parsed(file)
+          migration
+        } catch {
+          case e: Exception => reporter.parseFail(file, e)
+            new IrreversibleMigration("Stand-in for parsing error", new Date(), Seq.empty)
         } finally {
           stream.close()
         }
