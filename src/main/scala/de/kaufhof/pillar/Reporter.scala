@@ -7,6 +7,7 @@ import java.util.Date
 
 
 trait Reporter {
+  def executing(command: String)
   def parsing(file: File)
   def parsed(file: File)
   def parseFail(file: File, exception: Exception)

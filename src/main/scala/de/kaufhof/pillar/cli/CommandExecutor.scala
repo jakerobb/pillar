@@ -13,7 +13,7 @@ object CommandExecutor {
 class CommandExecutor(implicit val migratorConstructor: ((Registry, Reporter, String) => Migrator)) {
   def execute(command: Command, reporter: Reporter) {
     val migrator = migratorConstructor(command.registry, reporter, command.appliedMigrationsTableName)
-
+    reporter.executing(command.action.toString)
     command.action match {
       case Initialize => migrator.initialize(command.session, command.keyspace, command.replicationStrategy)
       case Migrate => migrator.migrate(command.session, command.timeStampOption.map(new Date(_)))

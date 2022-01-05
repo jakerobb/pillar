@@ -7,6 +7,10 @@ import java.util.Date
 
 class PrintStreamReporter(stream: PrintStream) extends Reporter {
 
+  override def executing(command: String) {
+    stream.println(s"Executing command ${command}")
+  }
+
   override def parsing(file: File) {
     stream.println(s"Parsing file ${file.getAbsolutePath}")
   }
