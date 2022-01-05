@@ -9,6 +9,7 @@ object Registry {
   }
 
   def fromDirectory(directory: File, reporter: Reporter): Registry = {
+    System.out.println(s"Creating registry from directory ${directory.getAbsolutePath}")
     new Registry(parseMigrationsInDirectory(directory, reporter).map(new ReportingMigration(reporter, _)))
   }
 
