@@ -44,8 +44,9 @@ rhPackage := {
     val iterationId = try { sys.env("GO_PIPELINE_COUNTER") } catch { case e: NoSuchElementException => "DEV" }
     "fpm -f -s dir -t rpm --package %s -n pillar --version %s --iteration %s -a all --prefix /opt/pillar -C %s/staged-package/ .".format(target.value.getPath, version.value, iterationId, target.value.getPath).!
 
-    val pkg = file("%s/pillar.noarch.rpm".format(target.value.getPath))
+    val pkg = file("%s/pillar-%s-%s.noarch.rpm".format(target.value.getPath, version.value, iterationId))
     if(!pkg.exists()) throw new RuntimeException("Packaging failed. Check logs for fpm output.")
+    pkg.renameTo(file("%s/pillar.noarch.rpm"))
     pkg
 }
 
