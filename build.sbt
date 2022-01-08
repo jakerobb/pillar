@@ -46,7 +46,6 @@ rhPackage := {
 
     val pkg = file("%s/pillar-%s-%s.noarch.rpm".format(target.value.getPath, version.value, iterationId))
     if(!pkg.exists()) throw new RuntimeException("Packaging failed. Check logs for fpm output.")
-    pkg.renameTo(file("%s/pillar.noarch.rpm"))
     pkg
 }
 
