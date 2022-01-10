@@ -51,7 +51,7 @@ rhPackage := {
 
 
 val dependencies = Seq(
-  "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.4",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "4.13.0",
   "org.cassandraunit" % "cassandra-unit" % "3.1.3.2" % "test",
   "com.typesafe" % "config" % "1.3.1",
   "org.mockito" % "mockito-core" % "2.8.47" % "test",

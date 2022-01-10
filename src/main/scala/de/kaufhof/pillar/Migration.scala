@@ -35,7 +35,7 @@ trait Migration {
   }
 
   def executeUpStatement(session: Session, appliedMigrationsTableName: String) {
-    up.foreach(session.execute)
+    applyStatements(session, up)
     insertIntoAppliedMigrations(session, appliedMigrationsTableName)
   }
 
@@ -58,6 +58,17 @@ trait Migration {
       value("applied_at", System.currentTimeMillis())
     )
   }
+
+  protected def applyStatements(session: Session, statements: Seq[String]) {
+    statements.foreach(s => {
+      System.out.println(s)
+      try {
+        session.execute(s)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+    })
+  }
 }
 
 class IrreversibleMigration(val description: String, val authoredAt: Date, val up: Seq[String]) extends Migration {
@@ -74,7 +85,7 @@ class ReversibleMigrationWithNoOpDown(val description: String, val authoredAt: D
 
 class ReversibleMigration(val description: String, val authoredAt: Date, val up: Seq[String], val down: Seq[String]) extends Migration {
   def executeDownStatement(session: Session, appliedMigrationsTableName: String) {
-    down.foreach(session.execute)
+    applyStatements(session, down)
     deleteFromAppliedMigrations(session, appliedMigrationsTableName)
   }
 }
