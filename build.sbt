@@ -7,6 +7,7 @@ fork in Test := true
 val assemblyTestSetting = test in assembly := {}
 
 assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs@_*) => MergeStrategy.discard
   case PathList("javax", "servlet", xs@_ *) => MergeStrategy.first
   case PathList(ps@_ *) if ps.last endsWith ".html" => MergeStrategy.first
   case "META-INF/io.netty.versions.properties" => MergeStrategy.last
