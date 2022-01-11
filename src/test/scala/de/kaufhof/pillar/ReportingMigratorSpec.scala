@@ -1,16 +1,16 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
 import org.mockito.Mockito._
 import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 class ReportingMigratorSpec extends FunSpec with MockitoSugar {
-  val reporter = mock[Reporter]
-  val wrapped = mock[Migrator]
+  val reporter: Reporter = mock[Reporter]
+  val wrapped: Migrator = mock[Migrator]
   val appliedMigrationsTableName = "applied_migrations"
   val migrator = new ReportingMigrator(reporter, wrapped, appliedMigrationsTableName)
-  val session = mock[Session]
+  val session: CqlSession = mock[CqlSession]
   val keyspace = "myks"
 
   describe("#initialize") {
@@ -24,14 +24,14 @@ class ReportingMigratorSpec extends FunSpec with MockitoSugar {
   }
 
   describe("#migrate") {
-    migrator.migrate(session)
+    migrator.migrate(session, keyspace)
 
     it("reports the migrate action") {
-      verify(reporter).migrating(session, None)
+      verify(reporter).migrating(session, keyspace, None)
     }
 
     it("delegates to the wrapped migrator") {
-      verify(wrapped).migrate(session, None)
+      verify(wrapped).migrate(session, keyspace, None)
     }
   }
 

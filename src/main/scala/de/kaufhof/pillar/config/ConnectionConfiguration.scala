@@ -1,10 +1,10 @@
 package de.kaufhof.pillar.config
 
-import com.datastax.driver.core.{AuthProvider, PlainTextAuthProvider}
+import com.datastax.oss.driver.api.core.auth.{AuthProvider, ProgrammaticPlainTextAuthProvider}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueType}
 
-import scala.language.implicitConversions
 import scala.collection.JavaConverters._
+import scala.language.implicitConversions
 
 /**
   * Configuration for connection to cassandra.
@@ -15,17 +15,18 @@ class ConnectionConfiguration(dataStoreName: String, environment: String, appCon
     .getConfig(s"pillar.$dataStoreName.$environment")
     .withFallback(ConfigFactory.load("cassandraConnectionReference.conf"))
 
-  val keyspace = connectionConfig.getString("cassandra-keyspace-name")
-  val seedAddress = ConfigHelper.readAsStringArray(connectionConfig, "cassandra-seed-address")
+  val datacenter: String = connectionConfig.getString("cassandra-datacenter-name")
+  val keyspace: String = connectionConfig.getString("cassandra-keyspace-name")
+  val seedAddress: List[String] = ConfigHelper.readAsStringArray(connectionConfig, "cassandra-seed-address")
 
-  val port = connectionConfig.getInt("cassandra-port")
+  val port: Int = connectionConfig.getInt("cassandra-port")
 
-  val useSsl = connectionConfig.getBoolean("use-ssl")
+  val useSsl: Boolean = connectionConfig.getBoolean("use-ssl")
 
   import ConfigHelper.toOptionalConfig
 
-  val auth = Auth(connectionConfig.getOptionalConfig("auth"))
-  val appliedMigrationsTableName = connectionConfig.getOptionalString("applied-migrations-table-name").getOrElse("applied_migrations")
+  val auth: Option[AuthProvider] = Auth(connectionConfig.getOptionalConfig("auth"))
+  val appliedMigrationsTableName: String = connectionConfig.getOptionalString("applied-migrations-table-name").getOrElse("applied_migrations")
 
   val sslConfig: Option[SslConfig] = SslConfig(connectionConfig.getOptionalConfig("ssl-options"))
 
@@ -71,12 +72,12 @@ case class PlaintextAuth(username: String, password: String) extends Auth
 
 object Auth {
   def apply(config: Option[Config]): Option[AuthProvider] = {
-    config.map(config => new PlainTextAuthProvider(config.getString("username"), config.getString("password")))
+    config.map(config => new ProgrammaticPlainTextAuthProvider(config.getString("username"), config.getString("password")))
   }
 }
 
 case class TrustStoreConfig(trustStorePath: String, trustStorePassword: String, trustStoreType: String = "JKS") {
-  def setAsSystemProperties() = {
+  def setAsSystemProperties(): String = {
     System.setProperty("javax.net.ssl.trustStore", trustStorePath)
     System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword)
     System.setProperty("javax.net.ssl.trustStoreType", trustStoreType)
@@ -92,7 +93,7 @@ case class KeyStoreConfig(keyStorePath: String, keyStorePassword: String, keySto
   }
 }
 
-case class SslConfig(val keyStoreConfig: Option[KeyStoreConfig], val trustStoreConfig: Option[TrustStoreConfig]) {
+case class SslConfig(keyStoreConfig: Option[KeyStoreConfig], trustStoreConfig: Option[TrustStoreConfig]) {
   def setAsSystemProperties(): Unit = {
     keyStoreConfig.foreach(_.setAsSystemProperties())
     trustStoreConfig.foreach(_.setAsSystemProperties())

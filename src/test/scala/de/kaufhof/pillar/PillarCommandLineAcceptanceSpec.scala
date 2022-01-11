@@ -1,8 +1,8 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.exceptions.InvalidQueryException
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.typesafe.config.ConfigFactory
+import com.datastax.oss.driver.api.core.servererrors.{InvalidQueryException, QueryValidationException}
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder
+import com.typesafe.config.{Config, ConfigFactory}
 import de.kaufhof.pillar.cli.App
 import org.scalatest.{BeforeAndAfter, FeatureSpec, GivenWhenThen, Matchers}
 
@@ -18,10 +18,11 @@ class PillarCommandLineAcceptanceSpec extends FeatureSpec
   val dataStoreName = "faker"
 
   //create a configuration pointing to the embedded cassandra, falling back to the default configuration
-  lazy val config = ConfigFactory.parseString(
+  lazy val config: Config = ConfigFactory.parseString(
     s"""
        |pillar.$dataStoreName {
        |    $environment {
+       |        cassandra-datacenter-name: datacenter1
        |        cassandra-port: $port
        |    }
        |}
@@ -31,7 +32,8 @@ class PillarCommandLineAcceptanceSpec extends FeatureSpec
     try {
       session.execute("DROP KEYSPACE %s".format(keyspaceName))
     } catch {
-      case ok: InvalidQueryException =>
+      case _: InvalidQueryException =>
+      case _: QueryValidationException =>
     }
   }
 
@@ -67,13 +69,13 @@ class PillarCommandLineAcceptanceSpec extends FeatureSpec
       App(configuration = config).run(Array("-e", environment, "-d", "src/test/resources/pillar/migrations", "migrate", dataStoreName))
 
       Then("the keyspace contains the events table")
-      session.execute(QueryBuilder.select().from(keyspaceName, "events")).all().size() should equal(0)
+      session.execute(QueryBuilder.selectFrom(keyspaceName, "events").all().build()).all().size() should equal(0)
 
       And("the keyspace contains the views table")
-      session.execute(QueryBuilder.select().from(keyspaceName, "views")).all().size() should equal(0)
+      session.execute(QueryBuilder.selectFrom(keyspaceName, "views").all().build()).all().size() should equal(0)
 
       And("the applied_migrations table records the migrations")
-      session.execute(QueryBuilder.select().from(keyspaceName, "applied_migrations")).all().size() should equal(4)
+      session.execute(QueryBuilder.selectFrom(keyspaceName, "applied_migrations").all().build()).all().size() should equal(4)
     }
   }
 }

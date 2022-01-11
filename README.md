@@ -21,7 +21,7 @@ databases with one key difference: Pillar is completely independent from any app
 
 ### Prerequisites
 
-1. Java SE 6 runtime environment
+1. Java 8 runtime environment
 1. Cassandra 2.0 with the native CQL protocol enabled
 
 ### From Source
@@ -41,15 +41,16 @@ The RPM installs Pillar to /opt/pillar.
 
 ### Packages
 
-Pillar is available at Maven Central under the GroupId de.kaufhof and ArtifactId pillar_2.10, pillar_2.11 or pillar_2.12. The current version of pillar is 4.1.2.
+Pillar is available at Maven Central under the GroupId com.datastax and ArtifactId pillar_2.10, pillar_2.11 or
+pillar_2.12. The current version of pillar is 5.0.0.
 
 #### sbt
 
-  libraryDependencies += "de.kaufhof" %% "pillar" % "4.1.0"
+libraryDependencies += "com.datastax" %% "pillar" % "5.0.0"
 
 #### Gradle
 
-  compile 'de.kaufhof:pillar_2.11:4.1.0'
+compile 'com.datastax:pillar_2.11:5.0.0'
 
 ## Usage
 
@@ -196,6 +197,7 @@ Given a data store called faker, the application.conf might look like the follow
     pillar.faker {
         development {
             cassandra-seed-address: "127.0.0.1"
+            cassandra-datacenter-name: "dc1"
             cassandra-keyspace-name: "pillar_development"
             replicationStrategy: "SimpleStrategy"
             replicationFactor: 0
@@ -206,6 +208,7 @@ Given a data store called faker, the application.conf might look like the follow
     pillar.faker {
         development {
             cassandra-seed-address: "127.0.0.1"
+            cassandra-datacenter-name: "dc1"
             cassandra-keyspace-name: "pillar_development"
             replicationStrategy: "NetworkTopologyStrategy"
             replicationFactor: [
@@ -222,6 +225,7 @@ You can optionally add ssl options and authentication to each of the environment
     pillar.faker {
         development {
             cassandra-seed-address: "127.0.0.1"
+            cassandra-datacenter-name: "dc1"
             cassandra-keyspace-name: "pillar_development"
             auth {
                 username: cassandra

@@ -1,15 +1,15 @@
 package de.kaufhof.pillar
 
-import java.util.Date
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.datastax.oss.driver.api.core.CqlSession
+
+import java.time.Instant
 
 object Migration {
-  def apply(description: String, authoredAt: Date, up: Seq[String]): Migration = {
+  def apply(description: String, authoredAt: Instant, up: Seq[String]): Migration = {
     new IrreversibleMigration(description, authoredAt, up)
   }
 
-  def apply(description: String, authoredAt: Date, up: Seq[String], down: Option[Seq[String]]): Migration = {
+  def apply(description: String, authoredAt: Instant, up: Seq[String], down: Option[Seq[String]]): Migration = {
     down match {
       case Some(downStatement) =>
         new ReversibleMigration(description, authoredAt, up, downStatement)
@@ -21,45 +21,29 @@ object Migration {
 
 trait Migration {
   val description: String
-  val authoredAt: Date
+  val authoredAt: Instant
   val up: Seq[String]
 
   def key: MigrationKey = MigrationKey(authoredAt, description)
 
-  def authoredAfter(date: Date): Boolean = {
-    authoredAt.after(date)
+  def authoredAfter(date: Instant): Boolean = {
+    authoredAt.isAfter(date)
   }
 
-  def authoredBefore(date: Date): Boolean = {
+  def authoredBefore(date: Instant): Boolean = {
     authoredAt.compareTo(date) <= 0
   }
 
-  def executeUpStatement(session: Session, appliedMigrationsTableName: String) {
+  def executeUpStatement(session: CqlSession, statementRegistry: StatementRegistry) {
     applyStatements(session, up)
-    insertIntoAppliedMigrations(session, appliedMigrationsTableName)
+    insertIntoAppliedMigrations(session, statementRegistry)
   }
 
-  def executeDownStatement(session: Session, appliedMigrationsTableName: String)
-
-  protected def deleteFromAppliedMigrations(session: Session, appliedMigrationsTableName: String) {
-    session.execute(QueryBuilder.
-      delete().
-      from(appliedMigrationsTableName).
-      where(QueryBuilder.eq("authored_at", authoredAt)).
-      and(QueryBuilder.eq("description", description))
-    )
+  private def insertIntoAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
+    session.execute(statementRegistry.insertIntoAppliedMigrations().bind(authoredAt, description, Instant.now()).setConsistencyLevel(statementRegistry.consistencyLevel))
   }
 
-  private def insertIntoAppliedMigrations(session: Session,appliedMigrationsTableName: String) {
-    session.execute(QueryBuilder.
-      insertInto(appliedMigrationsTableName).
-      value("authored_at", authoredAt).
-      value("description", description).
-      value("applied_at", System.currentTimeMillis())
-    )
-  }
-
-  protected def applyStatements(session: Session, statements: Seq[String]) {
+  protected def applyStatements(session: CqlSession, statements: Seq[String]) {
     statements.foreach(s => {
       System.out.println(s)
       try {
@@ -69,23 +53,29 @@ trait Migration {
       }
     })
   }
+
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry): Unit
+
+  protected def deleteFromAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
+    session.execute(statementRegistry.deleteFromAppliedMigrations().bind(authoredAt, description).setConsistencyLevel(statementRegistry.consistencyLevel))
+  }
 }
 
-class IrreversibleMigration(val description: String, val authoredAt: Date, val up: Seq[String]) extends Migration {
-  def executeDownStatement(session: Session, appliedMigrationsTableName: String) {
+class IrreversibleMigration(val description: String, val authoredAt: Instant, val up: Seq[String]) extends Migration {
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry) {
     throw new IrreversibleMigrationException(this)
   }
 }
 
-class ReversibleMigrationWithNoOpDown(val description: String, val authoredAt: Date, val up: Seq[String]) extends Migration {
-  def executeDownStatement(session: Session, appliedMigrationsTableName: String) {
-    deleteFromAppliedMigrations(session, appliedMigrationsTableName)
+class ReversibleMigrationWithNoOpDown(val description: String, val authoredAt: Instant, val up: Seq[String]) extends Migration {
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry) {
+    deleteFromAppliedMigrations(session, statementRegistry)
   }
 }
 
-class ReversibleMigration(val description: String, val authoredAt: Date, val up: Seq[String], val down: Seq[String]) extends Migration {
-  def executeDownStatement(session: Session, appliedMigrationsTableName: String) {
+class ReversibleMigration(val description: String, val authoredAt: Instant, val up: Seq[String], val down: Seq[String]) extends Migration {
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry) {
     applyStatements(session, down)
-    deleteFromAppliedMigrations(session, appliedMigrationsTableName)
+    deleteFromAppliedMigrations(session, statementRegistry)
   }
 }

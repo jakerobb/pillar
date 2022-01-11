@@ -1,11 +1,13 @@
 package de.kaufhof.pillar.cli
 
-import java.io.File
-
-import com.datastax.driver.core.{ConsistencyLevel, QueryOptions, Cluster}
+import com.datastax.oss.driver.api.core.{ConsistencyLevel, CqlSession}
 import com.typesafe.config.{Config, ConfigFactory}
 import de.kaufhof.pillar._
 import de.kaufhof.pillar.config.ConnectionConfiguration
+
+import java.io.File
+import java.net.InetSocketAddress
+import javax.net.ssl.SSLContext
 
 object App {
   def apply(reporter: Reporter = new PrintStreamReporter(System.out),
@@ -19,6 +21,7 @@ object App {
     } catch {
       case exception: Exception =>
         System.err.println(exception.getMessage)
+        System.err.flush()
         System.exit(1)
     }
 
@@ -36,12 +39,7 @@ class App(reporter: Reporter, configuration: Config) {
 
     val cassandraConfiguration = new ConnectionConfiguration(dataStoreName, environment, configuration)
 
-    val cluster: Cluster = createCluster(cassandraConfiguration)
-
-    val session = commandLineConfiguration.command match {
-      case Initialize => cluster.connect()
-      case _ => cluster.connect(cassandraConfiguration.keyspace)
-    }
+    val session = createSession(commandLineConfiguration, cassandraConfiguration)
 
     val replicationOptions = try {
       ReplicationStrategyBuilder.getReplicationStrategy(configuration, dataStoreName, environment)
@@ -49,6 +47,7 @@ class App(reporter: Reporter, configuration: Config) {
       case e: Exception => throw e
     }
 
+    val statementRegistry: StatementRegistry = new StatementPreparer(session, cassandraConfiguration.keyspace, cassandraConfiguration.appliedMigrationsTableName, ConsistencyLevel.QUORUM)
     val command = Command(
       commandLineConfiguration.command,
       session,
@@ -56,6 +55,7 @@ class App(reporter: Reporter, configuration: Config) {
       commandLineConfiguration.timeStampOption,
       registry,
       replicationOptions,
+      statementRegistry,
       cassandraConfiguration.appliedMigrationsTableName
     )
 
@@ -66,20 +66,21 @@ class App(reporter: Reporter, configuration: Config) {
     }
   }
 
-  private def createCluster(connectionConfiguration:ConnectionConfiguration): Cluster = {
-    val queryOptions = new QueryOptions()
-    queryOptions.setConsistencyLevel(ConsistencyLevel.QUORUM)
+  private def createSession(commandLineConfiguration: CommandLineConfiguration, connectionConfiguration: ConnectionConfiguration): CqlSession = {
+    val sessionBuilder = CqlSession.builder
 
-    val clusterBuilder = Cluster.builder()
-      .addContactPoints(connectionConfiguration.seedAddress:_*)
-      .withPort(connectionConfiguration.port)
-      .withQueryOptions(queryOptions)
-    connectionConfiguration.auth.foreach(clusterBuilder.withAuthProvider)
+    sessionBuilder.withLocalDatacenter(connectionConfiguration.datacenter)
+    connectionConfiguration.seedAddress
+      .map(a => new InetSocketAddress(a, connectionConfiguration.port))
+      .foreach(sessionBuilder.addContactPoint)
+
+    connectionConfiguration.auth.foreach(sessionBuilder.withAuthProvider)
 
     connectionConfiguration.sslConfig.foreach(_.setAsSystemProperties())
-    if (connectionConfiguration.useSsl)
-      clusterBuilder.withSSL()
+    if (connectionConfiguration.useSsl) {
+      sessionBuilder.withSslContext(SSLContext.getDefault)
+    }
 
-    clusterBuilder.build()
+    sessionBuilder.build
   }
 }

@@ -7,7 +7,6 @@
     </appender>
 
     <!-- log levels -->
-    <logger name="com.datastax.driver.core" level="ERROR" />
     <logger name="de.kaufhof.pillar" level="INFO" />
 
     <root level="WARN">

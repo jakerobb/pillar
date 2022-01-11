@@ -1,20 +1,21 @@
 package de.kaufhof.pillar
 
-import java.util.Date
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+
+import java.time.Instant
 
 class ReportingMigration(reporter: Reporter, wrapped: Migration) extends Migration {
   val description: String = wrapped.description
-  val authoredAt: Date = wrapped.authoredAt
+  val authoredAt: Instant = wrapped.authoredAt
   val up: Seq[String] = wrapped.up
 
-  override def executeUpStatement(session: Session, appliedMigrationsTableName: String) {
+  override def executeUpStatement(session: CqlSession, statementRegistry: StatementRegistry) {
     reporter.applying(wrapped)
-    wrapped.executeUpStatement(session, appliedMigrationsTableName)
+    wrapped.executeUpStatement(session, statementRegistry)
   }
 
-  def executeDownStatement(session: Session, appliedMigrationsTableName: String) {
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry) {
     reporter.reversing(wrapped)
-    wrapped.executeDownStatement(session, appliedMigrationsTableName)
+    wrapped.executeDownStatement(session, statementRegistry)
   }
 }

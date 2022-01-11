@@ -1,10 +1,9 @@
 package de.kaufhof.pillar
 
-import java.util.Map.Entry
-
 import com.typesafe.config.ConfigException.BadValue
 import com.typesafe.config.{Config, ConfigException, ConfigObject, ConfigValue}
 
+import java.util.Map.Entry
 import scala.util.{Failure, Success, Try}
 
 final case class ReplicationStrategyConfigError(msg: String) extends Exception
@@ -63,10 +62,10 @@ object ReplicationStrategyBuilder {
           NetworkTopologyStrategy(datacenters)
 
         case _ =>
-          throw new ReplicationStrategyConfigError(s"$repStrategy is not a valid replication strategy.")
+          throw ReplicationStrategyConfigError(s"$repStrategy is not a valid replication strategy.")
       }
 
-      case Failure(e: ConfigException.Missing) => SimpleStrategy()
+      case Failure(_: ConfigException.Missing) => SimpleStrategy()
       case Failure(e) => throw e
     }
   } catch {

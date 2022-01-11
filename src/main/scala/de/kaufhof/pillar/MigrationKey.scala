@@ -1,5 +1,5 @@
 package de.kaufhof.pillar
 
-import java.util.Date
+import java.time.Instant
 
-case class MigrationKey(authoredAt: Date, description: String)
+case class MigrationKey(authoredAt: Instant, description: String)

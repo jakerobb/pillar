@@ -1,9 +1,9 @@
 package de.kaufhof.pillar
 
-import org.scalatest.{FunSpec, BeforeAndAfter}
-import org.scalatest.Matchers
+import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+
 import java.io.{ByteArrayInputStream, FileInputStream}
-import java.util.Date
+import java.time.Instant
 
 class ParserSpec extends FunSpec with BeforeAndAfter with Matchers {
   describe("#parse") {
@@ -17,7 +17,7 @@ class ParserSpec extends FunSpec with BeforeAndAfter with Matchers {
 
       it("assigns authoredAt") {
         val resource = new FileInputStream(migrationPath)
-        Parser().parse(resource).authoredAt should equal(new Date(1370023262))
+        Parser().parse(resource).authoredAt should equal(Instant.ofEpochMilli(1370023262))
       }
 
       it("assigns description") {
@@ -47,7 +47,7 @@ class ParserSpec extends FunSpec with BeforeAndAfter with Matchers {
 
       it("assigns authoredAt") {
         val resource = new FileInputStream(migrationPath)
-        Parser().parse(resource).authoredAt should equal(new Date(1469630066000L))
+        Parser().parse(resource).authoredAt should equal(Instant.ofEpochMilli(1469630066000L))
       }
 
       it("assigns description") {

@@ -1,15 +1,16 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.querybuilder.QueryBuilder
-import scala.collection.JavaConversions
-import java.util.Date
+import com.datastax.oss.driver.api.core.CqlSession
+
+import java.time.Instant
+import scala.collection.JavaConverters
 
 object AppliedMigrations {
-  def apply(session: Session, registry: Registry, appliedMigrationsTableName: String): AppliedMigrations = {
-    val results = session.execute(QueryBuilder.select("authored_at", "description").from(appliedMigrationsTableName))
-    new AppliedMigrations(JavaConversions.asScalaBuffer(results.all()).map {
-      row => registry(MigrationKey(row.getTimestamp("authored_at"), row.getString("description")))
+  def apply(session: CqlSession, registry: Registry, statementRegistry: StatementRegistry): AppliedMigrations = {
+
+    val results = session.execute(statementRegistry.selectFromAppliedMigrations().bind().setConsistencyLevel(statementRegistry.consistencyLevel))
+    new AppliedMigrations(JavaConverters.asScalaBuffer(results.all()).map {
+      row => registry(MigrationKey(row.getInstant("authored_at"), row.getString("description")))
     })
   }
 }
@@ -21,7 +22,7 @@ class AppliedMigrations(applied: Seq[Migration]) {
 
   def iterator: Iterator[Migration] = applied.iterator
 
-  def authoredAfter(date: Date): Seq[Migration] = applied.filter(migration => migration.authoredAfter(date))
+  def authoredAfter(date: Instant): Seq[Migration] = applied.filter(migration => migration.authoredAfter(date))
 
   def contains(other: Migration): Boolean = applied.contains(other)
 }

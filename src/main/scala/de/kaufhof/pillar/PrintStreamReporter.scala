@@ -1,9 +1,9 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
 
 import java.io.{File, PrintStream}
-import java.util.Date
+import java.time.Instant
 
 class PrintStreamReporter(stream: PrintStream) extends Reporter {
 
@@ -20,27 +20,32 @@ class PrintStreamReporter(stream: PrintStream) extends Reporter {
     exception.printStackTrace(stream)
   }
 
-  override def migrating(session: Session, dateRestriction: Option[Date]) {
-    stream.println(s"Migrating with date restriction $dateRestriction")
+  override def migrating(session: CqlSession, keyspace: String, dateRestriction: Option[Instant]) {
+    stream.println(s"Migrating keyspace $keyspace with date restriction $dateRestriction")
   }
 
   override def applying(migration: Migration) {
-    stream.println(s"Applying ${migration.authoredAt.getTime}: ${migration.description}")
+    stream.println(s"Applying ${migration.authoredAt.toEpochMilli}: ${migration.description}")
   }
 
   override def reversing(migration: Migration) {
-    stream.println(s"Reversing ${migration.authoredAt.getTime}: ${migration.description}")
+    stream.println(s"Reversing ${migration.authoredAt.toEpochMilli}: ${migration.description}")
   }
 
-  override def destroying(session: Session, keyspace: String) {
+  override def destroying(session: CqlSession, keyspace: String) {
     stream.println(s"Destroying $keyspace")
   }
 
-  override def creatingKeyspace(session: Session, keyspace: String, replicationStrategy: ReplicationStrategy): Unit = {
+
+  override def usingKeyspace(session: CqlSession, keyspace: String): Unit = {
+    stream.println(s"Using keyspace $keyspace")
+  }
+
+  override def creatingKeyspace(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy): Unit = {
     stream.println(s"Creating keyspace $keyspace")
   }
 
-  override def creatingMigrationsTable(session: Session, keyspace: String, appliedMigrationsTableName: String): Unit = {
+  override def creatingMigrationsTable(session: CqlSession, keyspace: String, appliedMigrationsTableName: String): Unit = {
     stream.println(s"Creating migrations-table [$appliedMigrationsTableName] in keyspace $keyspace")
   }
 

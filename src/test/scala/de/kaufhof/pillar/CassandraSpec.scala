@@ -1,11 +1,11 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.Cluster
-import com.typesafe.config.ConfigFactory
+import com.datastax.oss.driver.api.core.CqlSession
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
+import java.net.InetSocketAddress
 import scala.concurrent.duration._
 
 /**
@@ -19,15 +19,15 @@ import scala.concurrent.duration._
 trait CassandraSpec extends ScalaFutures with BeforeAndAfterAll {
   this: Suite =>
 
-  //These must be lazy to ensure correct init order
-  protected lazy val port = EmbeddedCassandraServerHelper.getNativeTransportPort
-
-  lazy val cluster = {
+  lazy val session: CqlSession = {
     startEmbeddedCassandra()
-    Cluster.builder().addContactPoint("127.0.0.1").withPort(port).build()
+    CqlSession.builder()
+      .addContactPoint(new InetSocketAddress("127.0.0.1", port))
+      .withLocalDatacenter("datacenter1")
+      .build()
   }
-
-  lazy val session = cluster.connect()
+  //These must be lazy to ensure correct init order
+  protected lazy val port: Int = EmbeddedCassandraServerHelper.getNativeTransportPort
 
   protected def startEmbeddedCassandra(): Unit = try {
     //Start the Cassandra Instance

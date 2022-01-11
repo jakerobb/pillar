@@ -1,38 +1,39 @@
 package de.kaufhof.pillar
 
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.{ConsistencyLevel, CqlSession}
 import org.mockito.Mockito._
-import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{FunSpec, Matchers}
 
 class ReportingMigrationSpec extends FunSpec with Matchers with MockitoSugar {
-  val reporter = mock[Reporter]
-  val wrapped = mock[Migration]
+  val reporter: Reporter = mock[Reporter]
+  val wrapped: Migration = mock[Migration]
   val migration = new ReportingMigration(reporter, wrapped)
-  val session = mock[Session]
+  val session: CqlSession = mock[CqlSession]
   val appliedMigrationsTableName = "applied_migrations"
+  val statementRegistry = new StatementPreparer(session, "keyspace", appliedMigrationsTableName, ConsistencyLevel.ONE)
 
   describe("#executeUpStatement") {
-    migration.executeUpStatement(session, appliedMigrationsTableName)
+    migration.executeUpStatement(session, statementRegistry)
 
     it("reports the applying action") {
       verify(reporter).applying(wrapped)
     }
 
     it("delegates to the wrapped migration") {
-      verify(wrapped).executeUpStatement(session, appliedMigrationsTableName)
+      verify(wrapped).executeUpStatement(session, statementRegistry)
     }
   }
 
   describe("#executeDownStatement") {
-    migration.executeDownStatement(session, appliedMigrationsTableName)
+    migration.executeDownStatement(session, statementRegistry)
 
     it("reports the reversing action") {
       verify(reporter).reversing(wrapped)
     }
 
     it("delegates to the wrapped migration") {
-      verify(wrapped).executeDownStatement(session, appliedMigrationsTableName)
+      verify(wrapped).executeDownStatement(session, statementRegistry)
     }
   }
 }
