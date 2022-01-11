@@ -5,7 +5,7 @@ import com.datastax.oss.driver.api.core.{ConsistencyLevel, CqlIdentifier}
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder
 import org.scalatest.{BeforeAndAfter, FeatureSpec, GivenWhenThen, Matchers}
 
-import java.time.Instant
+import java.time.{Duration, Instant}
 
 class PillarLibraryAcceptanceSpec extends FeatureSpec
   with CassandraSpec
@@ -18,8 +18,8 @@ class PillarLibraryAcceptanceSpec extends FeatureSpec
   val simpleStrategy: SimpleStrategy = SimpleStrategy()
   val appliedMigrationsTableName = "applied_migrations"
   val nonDefaultAppliedMigrationsTableName = "applied_migrations_non_default"
-  val statementRegistry = new StatementPreparer(session, keyspaceName, appliedMigrationsTableName, ConsistencyLevel.ONE)
-  val nonDefaultStatementRegistry = new StatementPreparer(session, keyspaceName, nonDefaultAppliedMigrationsTableName, ConsistencyLevel.ONE)
+  val statementRegistry = new StatementPreparer(session, keyspaceName, appliedMigrationsTableName, ConsistencyLevel.ONE, Duration.ofMinutes(1))
+  val nonDefaultStatementRegistry = new StatementPreparer(session, keyspaceName, nonDefaultAppliedMigrationsTableName, ConsistencyLevel.ONE, Duration.ofMinutes(1))
 
   val now: Instant = Instant.now()
   val migrations = Seq(

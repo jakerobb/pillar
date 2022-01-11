@@ -1,8 +1,9 @@
 package de.kaufhof.pillar
 
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
 
-import java.time.Instant
+import java.time.{Duration, Instant}
 
 object Migration {
   def apply(description: String, authoredAt: Instant, up: Seq[String]): Migration = {
@@ -39,15 +40,17 @@ trait Migration {
     insertIntoAppliedMigrations(session, statementRegistry)
   }
 
-  private def insertIntoAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
-    session.execute(statementRegistry.insertIntoAppliedMigrations().bind(authoredAt, description, Instant.now()).setConsistencyLevel(statementRegistry.consistencyLevel))
+  protected def deleteFromAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
+    session.execute(statementRegistry.bindDeleteFromAppliedMigrations(authoredAt, description))
   }
 
   protected def applyStatements(session: CqlSession, statements: Seq[String]) {
     statements.foreach(s => {
       System.out.println(s)
       try {
-        session.execute(s)
+        val ss = SimpleStatement.builder(s)
+          .setTimeout(Duration.ofMinutes(1)).build
+        session.execute(ss)
       } catch {
         case e: Exception => e.printStackTrace()
       }
@@ -56,8 +59,8 @@ trait Migration {
 
   def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry): Unit
 
-  protected def deleteFromAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
-    session.execute(statementRegistry.deleteFromAppliedMigrations().bind(authoredAt, description).setConsistencyLevel(statementRegistry.consistencyLevel))
+  private def insertIntoAppliedMigrations(session: CqlSession, statementRegistry: StatementRegistry) {
+    session.execute(statementRegistry.bindInsertIntoAppliedMigrations(authoredAt, description, Instant.now()))
   }
 }
 

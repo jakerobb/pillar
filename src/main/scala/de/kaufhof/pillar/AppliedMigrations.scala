@@ -7,8 +7,7 @@ import scala.collection.JavaConverters
 
 object AppliedMigrations {
   def apply(session: CqlSession, registry: Registry, statementRegistry: StatementRegistry): AppliedMigrations = {
-
-    val results = session.execute(statementRegistry.selectFromAppliedMigrations().bind().setConsistencyLevel(statementRegistry.consistencyLevel))
+    val results = session.execute(statementRegistry.bindSelectFromAppliedMigrations())
     new AppliedMigrations(JavaConverters.asScalaBuffer(results.all()).map {
       row => registry(MigrationKey(row.getInstant("authored_at"), row.getString("description")))
     })

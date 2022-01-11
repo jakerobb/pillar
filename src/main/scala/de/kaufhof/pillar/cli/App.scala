@@ -7,6 +7,7 @@ import de.kaufhof.pillar.config.ConnectionConfiguration
 
 import java.io.File
 import java.net.InetSocketAddress
+import java.time.Duration
 import javax.net.ssl.SSLContext
 
 object App {
@@ -47,7 +48,11 @@ class App(reporter: Reporter, configuration: Config) {
       case e: Exception => throw e
     }
 
-    val statementRegistry: StatementRegistry = new StatementPreparer(session, cassandraConfiguration.keyspace, cassandraConfiguration.appliedMigrationsTableName, ConsistencyLevel.QUORUM)
+    val statementRegistry: StatementRegistry = new StatementPreparer(session,
+      cassandraConfiguration.keyspace,
+      cassandraConfiguration.appliedMigrationsTableName,
+      ConsistencyLevel.QUORUM,
+      Duration.ofMinutes(1))
     val command = Command(
       commandLineConfiguration.command,
       session,

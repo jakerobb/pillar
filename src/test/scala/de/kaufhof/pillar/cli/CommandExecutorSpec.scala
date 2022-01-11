@@ -6,7 +6,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpec}
 
-import java.time.Instant
+import java.time.{Duration, Instant}
 
 class CommandExecutorSpec extends FunSpec with BeforeAndAfter with MockitoSugar {
   describe("#execute") {
@@ -16,7 +16,7 @@ class CommandExecutorSpec extends FunSpec with BeforeAndAfter with MockitoSugar 
     val reporter = mock[Reporter]
     val migrator = mock[Migrator]
     val appliedMigrationsTableName = "applied_migrations"
-    val statementRegistry: StatementRegistry = new StatementPreparer(session, keyspace, appliedMigrationsTableName, ConsistencyLevel.ONE)
+    val statementRegistry: StatementRegistry = new StatementPreparer(session, keyspace, appliedMigrationsTableName, ConsistencyLevel.ONE, Duration.ofMinutes(1))
     val simpleStrategy = SimpleStrategy()
     val networkTopologyStrategy = NetworkTopologyStrategyTestData.networkTopologyStrategy
     val migratorConstructor = mock[(Registry, StatementRegistry, Reporter, String) => Migrator]

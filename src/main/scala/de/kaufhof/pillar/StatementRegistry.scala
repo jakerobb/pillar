@@ -1,21 +1,23 @@
 package de.kaufhof.pillar
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.cql.{BoundStatement, PreparedStatement}
 import com.datastax.oss.driver.api.core.{ConsistencyLevel, CqlSession}
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker
 
+import java.time.Duration
+
 sealed trait StatementRegistry {
   def consistencyLevel: ConsistencyLevel
 
-  def selectFromAppliedMigrations(): PreparedStatement
+  def bindSelectFromAppliedMigrations(): BoundStatement
 
-  def insertIntoAppliedMigrations(): PreparedStatement
+  def bindInsertIntoAppliedMigrations(values: Object*): BoundStatement
 
-  def deleteFromAppliedMigrations(): PreparedStatement
+  def bindDeleteFromAppliedMigrations(values: Object*): BoundStatement
 }
 
-class StatementPreparer(session: CqlSession, keyspace: String, appliedMigrationsTableName: String, consistency: ConsistencyLevel) extends StatementRegistry {
+class StatementPreparer(session: CqlSession, keyspace: String, appliedMigrationsTableName: String, consistency: ConsistencyLevel, timeoutDuration: Duration) extends StatementRegistry {
   lazy val consistencyLevel: ConsistencyLevel = consistency
 
   lazy val selectFromAppliedMigrations: PreparedStatement = {
@@ -40,5 +42,23 @@ class StatementPreparer(session: CqlSession, keyspace: String, appliedMigrations
       .whereColumn("description").isEqualTo(bindMarker())
 
     session.prepare(deleteFromAppliedMigrationsQuery.build)
+  }
+
+  override def bindSelectFromAppliedMigrations(): BoundStatement = {
+    bind(selectFromAppliedMigrations)
+  }
+
+  override def bindInsertIntoAppliedMigrations(values: Object*): BoundStatement = {
+    bind(insertIntoAppliedMigrations, values)
+  }
+
+  override def bindDeleteFromAppliedMigrations(values: Object*): BoundStatement = {
+    bind(deleteFromAppliedMigrations, values)
+  }
+
+  def bind(preparedStatement: PreparedStatement, values: Object*): BoundStatement = {
+    preparedStatement.bind(values: _*)
+      .setConsistencyLevel(consistencyLevel)
+      .setTimeout(timeoutDuration)
   }
 }
