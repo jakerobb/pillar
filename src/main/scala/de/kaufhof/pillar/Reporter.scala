@@ -7,6 +7,10 @@ import java.time.Instant
 
 
 trait Reporter {
+  def emptyDirectory(directory: File): Unit
+
+  def readingDirectory(directory: File): Unit
+
   def parsing(file: File): Unit
 
   def parsed(file: File): Unit

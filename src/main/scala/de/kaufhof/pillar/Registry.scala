@@ -9,12 +9,15 @@ object Registry {
   }
 
   def fromDirectory(directory: File, reporter: Reporter): Registry = {
-    System.out.println(s"Creating registry from directory ${directory.getAbsolutePath}")
+    reporter.readingDirectory(directory)
     new Registry(parseMigrationsInDirectory(directory, reporter).map(new ReportingMigration(reporter, _)))
   }
 
   private def parseMigrationsInDirectory(directory: File, reporter: Reporter): Seq[Migration] = {
-    if(!directory.isDirectory) return List.empty
+    if (!directory.isDirectory) {
+      reporter.emptyDirectory(directory)
+      return List.empty
+    }
 
     val parser = Parser()
 
@@ -28,7 +31,7 @@ object Registry {
           migration
         } catch {
           case e: Exception => reporter.parseFail(file, e)
-            new IrreversibleMigration("Stand-in for parsing error", Instant.now(), Seq.empty)
+            throw e
         } finally {
           stream.close()
         }

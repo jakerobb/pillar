@@ -7,6 +7,14 @@ import java.time.Instant
 
 class PrintStreamReporter(stream: PrintStream) extends Reporter {
 
+  override def emptyDirectory(directory: File): Unit = {
+    stream.println(s"Directory ${directory.getAbsolutePath} is empty.")
+  }
+
+  override def readingDirectory(directory: File): Unit = {
+    stream.println(s"Reading migrations from ${directory.getAbsolutePath}")
+  }
+
   override def parsing(file: File) {
     stream.println(s"Parsing file ${file.getAbsolutePath}")
   }
@@ -39,7 +47,6 @@ class PrintStreamReporter(stream: PrintStream) extends Reporter {
   override def destroying(session: CqlSession, keyspace: String) {
     stream.println(s"Destroying $keyspace")
   }
-
 
   override def usingKeyspace(session: CqlSession, keyspace: String): Unit = {
     stream.println(s"Using keyspace $keyspace")

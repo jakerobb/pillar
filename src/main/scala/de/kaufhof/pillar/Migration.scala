@@ -46,13 +46,14 @@ trait Migration {
 
   protected def applyStatements(session: CqlSession, statements: Seq[String]) {
     statements.foreach(s => {
-      System.out.println(s)
       try {
         val ss = SimpleStatement.builder(s)
           .setTimeout(Duration.ofMinutes(1)).build
         session.execute(ss)
       } catch {
-        case e: Exception => e.printStackTrace()
+        case e: Exception =>
+          e.printStackTrace()
+          throw e
       }
     })
   }

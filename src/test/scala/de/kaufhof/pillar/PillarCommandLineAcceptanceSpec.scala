@@ -6,6 +6,11 @@ import com.typesafe.config.{Config, ConfigFactory}
 import de.kaufhof.pillar.cli.App
 import org.scalatest.{BeforeAndAfter, FeatureSpec, GivenWhenThen, Matchers}
 
+// todo tests we need (not necessarily in this file; just wanted to put this note somewhere)
+// parsing failure logs something useful
+// execution failure aborts the run
+// timeout is honored
+
 class PillarCommandLineAcceptanceSpec extends FeatureSpec
   with CassandraSpec
   with GivenWhenThen
