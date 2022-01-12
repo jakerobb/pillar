@@ -17,9 +17,8 @@ class ReportingMigratorSpec extends FunSpec with MockitoSugar {
     val replicationStrategy = SimpleStrategy()
     migrator.initialize(session, keyspace, replicationStrategy)
 
-    it("delegates to both createKeyspace and createMigrationsTable of the wrapped migrator") {
-      verify(wrapped).createKeyspace(session, keyspace, replicationStrategy)
-      verify(wrapped).createMigrationsTable(session, keyspace)
+    it("delegates to the wrapped migrator") {
+      verify(wrapped).initialize(session, keyspace, replicationStrategy)
     }
   }
 

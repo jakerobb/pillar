@@ -1,6 +1,7 @@
 package de.kaufhof.pillar
 
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.config.{DefaultDriverOption, DriverConfigLoader}
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Suite}
@@ -21,10 +22,14 @@ trait CassandraSpec extends ScalaFutures with BeforeAndAfterAll {
 
   lazy val session: CqlSession = {
     startEmbeddedCassandra()
+    val configLoader = DriverConfigLoader.programmaticBuilder
+      .withBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE, false)
+      .build
     CqlSession.builder()
       .addContactPoint(new InetSocketAddress("127.0.0.1", port))
       .withLocalDatacenter("datacenter1")
-      .build()
+      .withConfigLoader(configLoader)
+      .build
   }
   //These must be lazy to ensure correct init order
   protected lazy val port: Int = EmbeddedCassandraServerHelper.getNativeTransportPort

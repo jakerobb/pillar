@@ -1,15 +1,14 @@
 package de.kaufhof.pillar
 
-import com.datastax.oss.driver.api.core.cql.SimpleStatement
-import com.datastax.oss.driver.api.core.{CqlIdentifier, CqlSession}
+import com.datastax.oss.driver.api.core.CqlSession
 
-import java.time.{Duration, Instant}
+import java.time.Instant
 
 object CassandraMigrator {
   val appliedMigrationsTableNameDefault = "applied_migrations"
 }
 
-class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry, appliedMigrationsTableName: String) extends Migrator {
+class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry) extends Migrator {
   override def migrate(session: CqlSession, keyspace: String, dateRestriction: Option[Instant] = None) {
     val appliedMigrations = AppliedMigrations(session, registry, statementRegistry)
     useKeyspace(session, keyspace)
@@ -32,8 +31,7 @@ class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry
   }
 
   override def useKeyspace(session: CqlSession, keyspace: String): Unit = {
-    val s = SimpleStatement.builder(s"USE ${CqlIdentifier.fromCql(keyspace)}")
-      .setTimeout(Duration.ofMinutes(1)).build
+    val s = statementRegistry.useKeyspace(keyspace)
     session.execute(s)
   }
 
@@ -45,28 +43,17 @@ class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry
   }
 
   override def createKeyspace(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy = SimpleStrategy()): Unit = {
-    val s = SimpleStatement.builder(s"CREATE KEYSPACE IF NOT EXISTS $keyspace WITH replication = ${replicationStrategy.cql}")
-      .setTimeout(Duration.ofMinutes(1)).build
+    val s = statementRegistry.createKeyspace(keyspace, replicationStrategy)
     session.execute(s)
   }
 
   override def createMigrationsTable(session: CqlSession, keyspace: String): Unit = {
-    val s = SimpleStatement.builder(
-      """
-        | CREATE TABLE IF NOT EXISTS %s.%s (
-        |   authored_at timestamp,
-        |   description text,
-        |   applied_at timestamp,
-        |   PRIMARY KEY (authored_at, description)
-        |  )
-      """.stripMargin.format(keyspace, appliedMigrationsTableName))
-      .setTimeout(Duration.ofMinutes(1)).build
+    val s = statementRegistry.createMigrationsTable()
     session.execute(s)
   }
 
   override def destroy(session: CqlSession, keyspace: String) {
-    val s = SimpleStatement.builder("DROP KEYSPACE %s".format(keyspace))
-      .setTimeout(Duration.ofMinutes(1)).build
+    val s = statementRegistry.dropKeyspace(keyspace)
     session.execute(s)
   }
 }

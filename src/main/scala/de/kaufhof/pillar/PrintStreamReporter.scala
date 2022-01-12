@@ -20,6 +20,10 @@ class PrintStreamReporter(stream: PrintStream) extends Reporter {
     exception.printStackTrace(stream)
   }
 
+  override def initializing(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy): Unit = {
+    stream.println(s"Initializing for keyspace $keyspace")
+  }
+
   override def migrating(session: CqlSession, keyspace: String, dateRestriction: Option[Instant]) {
     stream.println(s"Migrating keyspace $keyspace with date restriction $dateRestriction")
   }

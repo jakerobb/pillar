@@ -3,6 +3,7 @@ package de.kaufhof.pillar.config
 import com.datastax.oss.driver.api.core.auth.{AuthProvider, ProgrammaticPlainTextAuthProvider}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueType}
 
+import java.time.Duration
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 
@@ -25,6 +26,8 @@ class ConnectionConfiguration(dataStoreName: String, environment: String, appCon
 
   import ConfigHelper.toOptionalConfig
 
+  private val requestTimeoutSecondsString: String = connectionConfig.getOptionalString("request-timeout-seconds").getOrElse("60")
+  val requestTimeout: Duration = Duration.ofSeconds(requestTimeoutSecondsString.toLong)
   val auth: Option[AuthProvider] = Auth(connectionConfig.getOptionalConfig("auth"))
   val appliedMigrationsTableName: String = connectionConfig.getOptionalString("applied-migrations-table-name").getOrElse("applied_migrations")
 

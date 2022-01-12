@@ -13,6 +13,8 @@ trait Reporter {
 
   def parseFail(file: File, exception: Exception): Unit
 
+  def initializing(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy): Unit
+
   def migrating(session: CqlSession, keyspace: String, dateRestriction: Option[Instant]): Unit
 
   def applying(migration: Migration): Unit

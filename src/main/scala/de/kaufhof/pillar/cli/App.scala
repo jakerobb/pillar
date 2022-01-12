@@ -1,5 +1,6 @@
 package de.kaufhof.pillar.cli
 
+import com.datastax.oss.driver.api.core.config.{DefaultDriverOption, DriverConfigLoader}
 import com.datastax.oss.driver.api.core.{ConsistencyLevel, CqlSession}
 import com.typesafe.config.{Config, ConfigFactory}
 import de.kaufhof.pillar._
@@ -7,7 +8,6 @@ import de.kaufhof.pillar.config.ConnectionConfiguration
 
 import java.io.File
 import java.net.InetSocketAddress
-import java.time.Duration
 import javax.net.ssl.SSLContext
 
 object App {
@@ -40,7 +40,7 @@ class App(reporter: Reporter, configuration: Config) {
 
     val cassandraConfiguration = new ConnectionConfiguration(dataStoreName, environment, configuration)
 
-    val session = createSession(commandLineConfiguration, cassandraConfiguration)
+    val session = createSession(cassandraConfiguration)
 
     val replicationOptions = try {
       ReplicationStrategyBuilder.getReplicationStrategy(configuration, dataStoreName, environment)
@@ -52,7 +52,7 @@ class App(reporter: Reporter, configuration: Config) {
       cassandraConfiguration.keyspace,
       cassandraConfiguration.appliedMigrationsTableName,
       ConsistencyLevel.QUORUM,
-      Duration.ofMinutes(1))
+      cassandraConfiguration.requestTimeout)
     val command = Command(
       commandLineConfiguration.command,
       session,
@@ -71,7 +71,7 @@ class App(reporter: Reporter, configuration: Config) {
     }
   }
 
-  private def createSession(commandLineConfiguration: CommandLineConfiguration, connectionConfiguration: ConnectionConfiguration): CqlSession = {
+  private def createSession(connectionConfiguration: ConnectionConfiguration): CqlSession = {
     val sessionBuilder = CqlSession.builder
 
     sessionBuilder.withLocalDatacenter(connectionConfiguration.datacenter)
@@ -86,6 +86,9 @@ class App(reporter: Reporter, configuration: Config) {
       sessionBuilder.withSslContext(SSLContext.getDefault)
     }
 
-    sessionBuilder.build
+    val configLoader = DriverConfigLoader.programmaticBuilder
+      .withBoolean(DefaultDriverOption.REQUEST_WARN_IF_SET_KEYSPACE, false)
+      .build
+    sessionBuilder.withConfigLoader(configLoader).build
   }
 }

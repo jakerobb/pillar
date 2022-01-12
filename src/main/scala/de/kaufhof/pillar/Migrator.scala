@@ -6,11 +6,11 @@ import java.time.Instant
 
 object Migrator {
   def apply(registry: Registry, statementRegistry: StatementRegistry, reporter: Reporter, appliedMigrationsTableName: String): Migrator = {
-    new ReportingMigrator(reporter, apply(registry, statementRegistry, appliedMigrationsTableName), appliedMigrationsTableName)
+    new ReportingMigrator(reporter, apply(registry, statementRegistry), appliedMigrationsTableName)
   }
 
-  def apply(registry: Registry, statementRegistry: StatementRegistry, appliedMigrationsTableName: String): Migrator = {
-    new CassandraMigrator(registry, statementRegistry, appliedMigrationsTableName)
+  def apply(registry: Registry, statementRegistry: StatementRegistry): Migrator = {
+    new CassandraMigrator(registry, statementRegistry)
   }
 }
 

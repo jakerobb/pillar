@@ -6,8 +6,8 @@ import java.time.Instant
 
 class ReportingMigrator(reporter: Reporter, wrapped: Migrator, appliedMigrationsTableName: String) extends Migrator {
   override def initialize(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy) {
-    createKeyspace(session, keyspace, replicationStrategy)
-    createMigrationsTable(session, keyspace)
+    reporter.initializing(session, keyspace, replicationStrategy)
+    wrapped.initialize(session, keyspace, replicationStrategy)
   }
 
   override def createKeyspace(session: CqlSession, keyspace: String, replicationStrategy: ReplicationStrategy): Unit = {
