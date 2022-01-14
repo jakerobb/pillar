@@ -1,12 +1,11 @@
 package de.kaufhof.pillar.cli
 
+import org.scalatest.{FunSpec, Matchers}
+
 import java.io.File
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
-
 class CommandLineConfigurationSpec extends FunSpec with Matchers {
-  val sep = File.separator
+  val sep: String = File.separator
 
   describe(".buildFromArguments") {
     describe("command initialize") {
@@ -31,12 +30,17 @@ class CommandLineConfigurationSpec extends FunSpec with Matchers {
 
         it("sets the command") {
           CommandLineConfiguration.buildFromArguments(Array("initialize", "faker")).command should be(Initialize)
-          CommandLineConfiguration.buildFromArguments(Array("migrate", "faker")).command should be (Migrate)
+          CommandLineConfiguration.buildFromArguments(Array("migrate", "faker")).command should be(Migrate)
+        }
+
+        it("sets the debug flag") {
+          CommandLineConfiguration.buildFromArguments(Array("-x", "initialize", "faker")).command should be(Initialize)
+          CommandLineConfiguration.buildFromArguments(Array("-x", "migrate", "faker")).command should be(Migrate)
         }
 
         it("sets the data store name") {
           CommandLineConfiguration.buildFromArguments(Array("initialize", "faker")).dataStore should equal("faker")
-          CommandLineConfiguration.buildFromArguments(Array("migrate", "faker")).dataStore should equal ("faker")
+          CommandLineConfiguration.buildFromArguments(Array("migrate", "faker")).dataStore should equal("faker")
         }
 
         it("sets the environment") {

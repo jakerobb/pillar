@@ -79,7 +79,7 @@ object CommandLineConfiguration {
         parseArgsRecursively(tail.tail, parserSuccess.copy(migrationsDirectory = Some(new File(tail.head))))
 
       case "-x" :: tail if tail.nonEmpty =>
-        parseArgsRecursively(tail.tail, parserSuccess.copy(debugOption = Some(true)))
+        parseArgsRecursively(tail, parserSuccess.copy(debugOption = Some(true)))
 
       case unknown =>
         ParserFailure(s"Failed to parse the command line - cannot handle arguments: ${unknown.mkString(" ")}")
