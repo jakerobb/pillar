@@ -65,11 +65,12 @@ class PillarLibraryAcceptanceSpec extends FeatureSpec
         """.stripMargin)))
   )
   val registry: Registry = Registry(migrations)
-  val migrator: Migrator = Migrator(registry, statementRegistry)
+  val migrator: Migrator = Migrator(registry, statementRegistry, debug = true)
 
   after {
     try {
-      session.execute("DROP KEYSPACE %s".format(keyspaceName))
+      val s = statementRegistry.buildStatement("DROP KEYSPACE %s".format(keyspaceName))
+      session.execute(s)
     } catch {
       case _: InvalidQueryException =>
       case _: QueryValidationException =>
@@ -169,7 +170,7 @@ class PillarLibraryAcceptanceSpec extends FeatureSpec
 
     scenario("all migrations for a non default applied migrations table name") {
       Given("an initialized, empty, keyspace")
-      val migrator = Migrator(registry, nonDefaultStatementRegistry)
+      val migrator = Migrator(registry, nonDefaultStatementRegistry, debug = true)
       migrator.initialize(session, keyspaceName, simpleStrategy)
 
       Given("a migration that creates an events table")

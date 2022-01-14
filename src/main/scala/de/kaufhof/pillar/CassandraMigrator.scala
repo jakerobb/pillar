@@ -8,12 +8,12 @@ object CassandraMigrator {
   val appliedMigrationsTableNameDefault = "applied_migrations"
 }
 
-class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry) extends Migrator {
+class CassandraMigrator(registry: Registry, statementRegistry: StatementRegistry, debug: Boolean) extends Migrator {
   override def migrate(session: CqlSession, keyspace: String, dateRestriction: Option[Instant] = None) {
     val appliedMigrations = AppliedMigrations(session, registry, statementRegistry)
     useKeyspace(session, keyspace)
-    selectMigrationsToReverse(dateRestriction, appliedMigrations).foreach(_.executeDownStatement(session, statementRegistry))
-    selectMigrationsToApply(dateRestriction, appliedMigrations).foreach(_.executeUpStatement(session, statementRegistry))
+    selectMigrationsToReverse(dateRestriction, appliedMigrations).foreach(_.executeDownStatement(session, statementRegistry, debug))
+    selectMigrationsToApply(dateRestriction, appliedMigrations).foreach(_.executeUpStatement(session, statementRegistry, debug))
   }
 
   private def selectMigrationsToApply(dateRestriction: Option[Instant], appliedMigrations: AppliedMigrations): Seq[Migration] = {

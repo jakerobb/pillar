@@ -5,12 +5,12 @@ import com.datastax.oss.driver.api.core.CqlSession
 import java.time.Instant
 
 object Migrator {
-  def apply(registry: Registry, statementRegistry: StatementRegistry, reporter: Reporter, appliedMigrationsTableName: String): Migrator = {
-    new ReportingMigrator(reporter, apply(registry, statementRegistry), appliedMigrationsTableName)
+  def apply(registry: Registry, statementRegistry: StatementRegistry, reporter: Reporter, appliedMigrationsTableName: String, debug: Boolean): Migrator = {
+    new ReportingMigrator(reporter, apply(registry, statementRegistry, debug), appliedMigrationsTableName)
   }
 
-  def apply(registry: Registry, statementRegistry: StatementRegistry): Migrator = {
-    new CassandraMigrator(registry, statementRegistry)
+  def apply(registry: Registry, statementRegistry: StatementRegistry, debug: Boolean): Migrator = {
+    new CassandraMigrator(registry, statementRegistry, debug)
   }
 }
 

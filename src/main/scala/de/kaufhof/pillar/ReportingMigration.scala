@@ -9,13 +9,13 @@ class ReportingMigration(reporter: Reporter, wrapped: Migration) extends Migrati
   val authoredAt: Instant = wrapped.authoredAt
   val up: Seq[String] = wrapped.up
 
-  override def executeUpStatement(session: CqlSession, statementRegistry: StatementRegistry) {
+  override def executeUpStatement(session: CqlSession, statementRegistry: StatementRegistry, debug: Boolean) {
     reporter.applying(wrapped)
-    wrapped.executeUpStatement(session, statementRegistry)
+    wrapped.executeUpStatement(session, statementRegistry, debug)
   }
 
-  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry) {
+  def executeDownStatement(session: CqlSession, statementRegistry: StatementRegistry, debug: Boolean) {
     reporter.reversing(wrapped)
-    wrapped.executeDownStatement(session, statementRegistry)
+    wrapped.executeDownStatement(session, statementRegistry, debug)
   }
 }

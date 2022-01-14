@@ -16,26 +16,26 @@ class ReportingMigrationSpec extends FunSpec with Matchers with MockitoSugar {
   val statementRegistry = new StatementPreparer(session, "keyspace", appliedMigrationsTableName, ConsistencyLevel.ONE, Duration.ofMinutes(1))
 
   describe("#executeUpStatement") {
-    migration.executeUpStatement(session, statementRegistry)
+    migration.executeUpStatement(session, statementRegistry, debug = true)
 
     it("reports the applying action") {
       verify(reporter).applying(wrapped)
     }
 
     it("delegates to the wrapped migration") {
-      verify(wrapped).executeUpStatement(session, statementRegistry)
+      verify(wrapped).executeUpStatement(session, statementRegistry, debug = true)
     }
   }
 
   describe("#executeDownStatement") {
-    migration.executeDownStatement(session, statementRegistry)
+    migration.executeDownStatement(session, statementRegistry, debug = true)
 
     it("reports the reversing action") {
       verify(reporter).reversing(wrapped)
     }
 
     it("delegates to the wrapped migration") {
-      verify(wrapped).executeDownStatement(session, statementRegistry)
+      verify(wrapped).executeDownStatement(session, statementRegistry, debug = true)
     }
   }
 }

@@ -58,6 +58,7 @@ class App(reporter: Reporter, configuration: Config) {
       session,
       cassandraConfiguration.keyspace,
       commandLineConfiguration.timeStampOption,
+      commandLineConfiguration.debug,
       registry,
       replicationOptions,
       statementRegistry,
